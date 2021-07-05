@@ -47,8 +47,9 @@ def CleanUpDoneVideo(targetPath=''):
             dl.append(ccsvp)
     
     # import pdb;pdb.set_trace()
-    fileListCopy(fl,str(targetPath))
-    _ = [dlf.unlink() for dlf in dl]
+    if not fl == []:
+        fileListCopy(fl,str(targetPath))
+        _ = [dlf.unlink() for dlf in dl]
         
         
     

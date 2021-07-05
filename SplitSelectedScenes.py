@@ -48,7 +48,7 @@ def CleanUpDoneVideo(targetPath=''):
 
 def cutVideo(Ivideo,Outvideo,startTime,EndTime):
     # cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe  -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
-    cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe -hwaccel cuda -hwaccel_output_format cuda  -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
+    cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe -y -hwaccel cuda -hwaccel_output_format cuda  -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
     cmdTemplate = cmdTemplate.replace('Ivideo', Ivideo)
     cmdTemplate = cmdTemplate.replace('00:00.0', startTime)
     cmdTemplate = cmdTemplate.replace('99:99.9', EndTime)
@@ -156,20 +156,24 @@ def main():
         # os.system('start "" "%s"' % str(Path.cwd()))
 
     for sceneImageFiles in SelectedFramesDir.glob('*.jp*g'):
+        sceneVideo = None
         for sve in supportedVideoExtension:
             vfn = re.sub('-Scene-[^\.]+','',sceneImageFiles.stem)
             # import pdb;pdb.set_trace()
             if Path(vfn+'.'+sve).is_file():
                 sceneVideo = vfn+'.'+sve
                 break
-        assert sceneVideo != None
+        if sceneVideo == None:
+            print('video not found')
+            continue
         csvFilePath = Path(sceneVideo).stem + '-Scenes.csv'
         assert Path(csvFilePath).is_file() 
         print(csvFilePath)
         try:
-            df = pd.read_csv(csvFilePath)
+            df = pd.read_csv(csvFilePath,skiprows=1)
         except:
             print('something is wrong with the csv reading YYYYYYYYYYYYYY',csvFilePath)
+            import pdb;pdb.set_trace()
             continue
         sceneId = re.search('Scene-(\d+)',sceneImageFiles.name).group(1)
         if not Path('extractedVideo').is_dir():
