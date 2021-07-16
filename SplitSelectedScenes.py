@@ -66,7 +66,7 @@ def cutVideo(Ivideo,Outvideo,startTime,EndTime):
             return
     print(getDuration(Ivideo),duration)
     print(Ivideo)
-    cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -i "Ivideo" -ss 00:00.0 -to 99:99.9 -c:a copy -c:v h264_nvenc -b:v 5M "output.mp4"'
+    cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe -n -hwaccel cuda -hwaccel_output_format cuda  -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
     cmdTemplate = cmdTemplate.replace('Ivideo', Ivideo)
     cmdTemplate = cmdTemplate.replace('00:00.0', startTime)
     cmdTemplate = cmdTemplate.replace('99:99.9', EndTime)
@@ -157,7 +157,7 @@ class VideoScene():
 
 def extractScene(Ivideo):
     # os.system(r'set path=%path%;C:\app\FFMPEG;C:\Users\HP\MiniConda3\envs\globalOne\Scripts;')
-    cmdTemplate = 'scenedetect -m 5s --drop-short-scenes -i "Ivideo" detect-content list-scenes  save-images'
+    cmdTemplate = 'C:\\Users\\HP\\MiniConda3\\envs\\globalOne\\Scripts\\scenedetect -m 5s --drop-short-scenes -i "Ivideo" detect-content list-scenes  save-images'
     cmdTemplate = cmdTemplate.replace('Ivideo', str(Ivideo))
     print(cmdTemplate)
     os.system(cmdTemplate)
