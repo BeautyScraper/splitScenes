@@ -15,10 +15,10 @@ import re
 import cv2
 import shutil 
 
-SelectedFramesDir = Path('SelectedScene')
+
 VideoPath = Path.cwd().glob('*.m[pk][v4]')
 supportedVideoExtension = ['mp4','mkv']
-cutObjects = []
+
 scannedPath = r'D:\paradise\stuff\Scanned'
 
 
@@ -57,16 +57,24 @@ def getDuration(filename):
 def cutVideo(Ivideo,Outvideo,startTime,EndTime):
     # cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe  -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
     # cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe -y -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
-    video = cv2.VideoCapture(Ivideo)
-    duration = video.get(cv2.CAP_PROP_POS_MSEC)
+    # video = cv2.VideoCapture(Ivideo)
+    # duration = video.get(cv2.CAP_PROP_POS_MSEC)
     # import pdb;pdb.set_trace()
-    if timeStringToValue(startTime) == 0:
-        if (timeStringToValue(EndTime)/100 - getDuration(Ivideo)[0]) < 1:
-            shutil.copy(Ivideo,Outvideo)
-            return
-    print(getDuration(Ivideo),duration)
+    print(timeStringToValue(startTime))
+    if timeStringToValue(startTime) <= 30000:
+        try:
+            if (timeStringToValue(EndTime)/1000 - getDuration(Ivideo)[0]) < 1:
+                # import pdb;pdb.set_trace()
+                shutil.copy(Ivideo,Outvideo)
+                return
+        except:
+            pass
+    # print(getDuration(Ivideo))
     print(Ivideo)
-    cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe -n -hwaccel cuda -hwaccel_output_format cuda  -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
+    application = Path('C:\\app\\FFMPEG\\ffmpeg.exe')
+    if not application.is_file():
+        import pdb;pdb.set_trace()
+    cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe -y -hwaccel cuda -hwaccel_output_format cuda  -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
     cmdTemplate = cmdTemplate.replace('Ivideo', Ivideo)
     cmdTemplate = cmdTemplate.replace('00:00.0', startTime)
     cmdTemplate = cmdTemplate.replace('99:99.9', EndTime)
@@ -133,6 +141,13 @@ class VideoScene():
         cutVideo(self.sceneVideo,self.Outvideo,self.startTime,self.EndTime)
         self.mifp_dellAll()
         
+    def is_same_as(self,cutVideo):
+        conditions = [
+        self.sceneVideo == cutVideo.sceneVideo,
+        self.startTime == cutVideo.startTime,
+        self.EndTime == cutVideo.EndTime
+        ]
+        return False not in conditions
         
     def mifp_add(self,image_fp):
         self.mifp.add(image_fp)
@@ -157,6 +172,9 @@ class VideoScene():
 
 def extractScene(Ivideo):
     # os.system(r'set path=%path%;C:\app\FFMPEG;C:\Users\HP\MiniConda3\envs\globalOne\Scripts;')
+    application = Path('C:\\Users\\HP\\MiniConda3\\envs\\globalOne\\Scripts\\scenedetect.exe')
+    if not application.is_file():
+        import pdb;pdb.set_trace()
     cmdTemplate = 'C:\\Users\\HP\\MiniConda3\\envs\\globalOne\\Scripts\\scenedetect -m 5s --drop-short-scenes -i "Ivideo" detect-content list-scenes  save-images'
     cmdTemplate = cmdTemplate.replace('Ivideo', str(Ivideo))
     print(cmdTemplate)
@@ -167,14 +185,17 @@ def GenrateCSVJPG(vp):
     if not Path(csvFilePath).is_file():
         extractScene(vp)    
         
-def main():
+def doIt(extractVideoDir = 'extractedVideo', SelectedFramesDirN = 'SelectedScene'):
+    # SelectedFramesDir = Path.cwd() / Path(SelectedFramesDirN)
+    SelectedFramesDir = Path.cwd() / Path(SelectedFramesDirN)
     if not SelectedFramesDir.is_dir():
         SelectedFramesDir.mkdir()
     for vp in VideoPath:
         GenrateCSVJPG(vp)
     # if input('open the dir[y]:')=='y':
         # os.system('start "" "%s"' % str(Path.cwd()))
-
+    cutObjects = []
+    # import pdb; pdb.set_trace()
     for sceneImageFiles in SelectedFramesDir.glob('*.jp*g'):
         sceneVideo = None
         for sve in supportedVideoExtension:
@@ -197,10 +218,10 @@ def main():
             continue
         # df.set_index()
         sceneId = re.search('Scene-(\d+)',sceneImageFiles.name).group(1)
-        if not Path('extractedVideo').is_dir():
-            Path('extractedVideo').mkdir()
+        if not Path(extractVideoDir).is_dir():
+            Path(extractVideoDir).mkdir()
         # Outvideo = 'extractedVideo\\' + VideoPath.name.replace('.',sceneId + '.')
-        Outvideo = 'extractedVideo\\' + re.sub('\.([^\.]*)$',sceneId + '.\\1',sceneVideo)
+        Outvideo = '%s\\' % extractVideoDir + re.sub('\.([^\.]*)$',sceneId + '.\\1',sceneVideo)
         # if Path(Outvideo).is_file():
             # sceneImageFiles.unlink()
             # continue
@@ -226,12 +247,25 @@ def main():
         cutObjects.append(newVideoSec)
         # sceneImageFiles.unlink()
         # sceneImageFiles
+    return cutObjects
 if __name__ == '__main__':
-    main()
-    for cvideo in cutObjects:
-        cvideo.writeBatFile()
+    cutObjects = doIt()
+    secondaryCutObjects = doIt('extractedVideo2', 'PVD2')
         
     for cvideo in cutObjects:
         cvideo.cutVideo()
+        sameVideo = [x for x in secondaryCutObjects if x.is_same_as(cvideo)]
+        if len(sameVideo) > 0:
+            outPath = Path.cwd() / 'extractedVideo2'
+            shutil.copy(".\\"+cvideo.Outvideo, outPath)
+            # import pdb;pdb.set_trace()
+            # secondaryCutObjects.remove(cvideo)
+            secondaryCutObjects.remove(sameVideo[0])
+            sameVideo[0].mifp_dellAll()
+    for cvideo in secondaryCutObjects:
+        cvideo.cutVideo()
+    
+
+        
     
     
