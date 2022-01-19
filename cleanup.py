@@ -41,6 +41,7 @@ def CleanUpDoneVideo(targetPath=''):
         correspondingCSVname = vpf.stem + '-Scenes.csv'
         ccsvp = Path(correspondingCSVname)
         if not ccsvp.is_file():
+            # pass
             continue
         if is_movable(vpf):
             fl.append(str(vpf))

@@ -175,7 +175,7 @@ def extractScene(Ivideo):
     application = Path('C:\\Users\\HP\\MiniConda3\\envs\\globalOne\\Scripts\\scenedetect.exe')
     if not application.is_file():
         import pdb;pdb.set_trace()
-    cmdTemplate = 'C:\\Users\\HP\\MiniConda3\\envs\\globalOne\\Scripts\\scenedetect -m 5s --drop-short-scenes -i "Ivideo" detect-content list-scenes  save-images'
+    cmdTemplate = 'C:\\Users\\HP\\MiniConda3\\envs\\globalOne\\Scripts\\scenedetect -m 1s --drop-short-scenes -i "Ivideo" detect-content list-scenes  save-images'
     cmdTemplate = cmdTemplate.replace('Ivideo', str(Ivideo))
     print(cmdTemplate)
     os.system(cmdTemplate)
@@ -233,7 +233,7 @@ def doIt(extractVideoDir = 'extractedVideo', SelectedFramesDirN = 'SelectedScene
             startTime = df.iloc[sceneId-1,2]  
             EndTime = df.iloc[sceneId-1,5]
         except:
-            import pdb;pdb.set_trace()
+            # import pdb;pdb.set_trace()
             print('unable to get timings')
             continue
         # Ivideo = sceneImageFiles
