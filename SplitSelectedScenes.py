@@ -185,9 +185,15 @@ def GenrateCSVJPG(vp):
     if not Path(csvFilePath).is_file():
         extractScene(vp)    
         
-def doIt(extractVideoDir = 'extractedVideo', SelectedFramesDirN = 'SelectedScene'):
+def doIt(extractVideoDir = 'extractedVideo', SelectedFramesDirN = 'SelectedScene', target_dir = ''):
     # SelectedFramesDir = Path.cwd() / Path(SelectedFramesDirN)
-    SelectedFramesDir = Path.cwd() / Path(SelectedFramesDirN)
+    
+    if target_dir == '':
+        target_dir = Path.cwd()
+    else:
+        target_dir = Path(target_dir)
+    if not Path(SelectedFramesDirN).is_absolute():
+        SelectedFramesDir = target_dir / Path(SelectedFramesDirN)
     if not SelectedFramesDir.is_dir():
         SelectedFramesDir.mkdir()
     for vp in VideoPath:
@@ -264,6 +270,7 @@ if __name__ == '__main__':
             sameVideo[0].mifp_dellAll()
     for cvideo in secondaryCutObjects:
         cvideo.cutVideo()
+    
     
 
         
