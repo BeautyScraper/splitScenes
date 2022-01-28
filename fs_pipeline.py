@@ -11,9 +11,9 @@ from pathlib import Path
 from SplitSelectedScenes import doIt as cutVideo
 # sys.path.append(r'D:\Developed\Automation\ExtractKeyFrames')
 
-main_dir = r'D:\paradise\stuff\new\pvd2\test'
-search_dir_path = r'D:\paradise\stuff\new\pvd2'
-target_dir_path = r'D:\paradise\stuff\new\pvd2'
+main_dir = r'D:\paradise\stuff\new\pvd\test'
+search_dir_path = r'D:\paradise\stuff\new\pvd'
+target_dir_path = r'D:\paradise\stuff\new\pvd'
 fs_fileSource = r'D:\paradise\stuff\simswappg\srcs'
 
 def get_corresponding_file(imgfiles,search_dir):
