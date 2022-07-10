@@ -1,3 +1,4 @@
+from ast import arg
 import os
 import argparse
 import re
@@ -9,12 +10,22 @@ import logging
 import shutil 
 from pathlib import Path
 from SplitSelectedScenes import doIt as cutVideo
-# sys.path.append(r'D:\Developed\Automation\ExtractKeyFrames')
+import argparse
+parser = argparse.ArgumentParser(description='Process some integers.')
 
-main_dir = r'D:\paradise\stuff\new\pvd\test'
-search_dir_path = r'D:\paradise\stuff\new\pvd'
-target_dir_path = r'D:\paradise\stuff\new\pvd'
-fs_fileSource = r'D:\paradise\stuff\simswappg\srcs'
+#check if sting is a valid path
+
+#argument to parse the input and output directories
+parser.add_argument('--main_dir', type=str, default=r'D:\paradise\stuff\new\pvd\test', help='input directory')
+parser.add_argument('--search_dir_path', type=str, default=r'D:\paradise\stuff\new\pvd', help='output directory')
+parser.add_argument('--target_dir_path', type=str, default=r'D:\paradise\stuff\new\pvd', help='output directory')
+parser.add_argument('--fs_fileSource', type=str, default=r'D:\paradise\stuff\simswappg\srcs', help='output directory')
+args = parser.parse_args()
+
+main_dir = args.main_dir
+search_dir_path = args.search_dir_path
+target_dir_path = args.target_dir_path
+fs_fileSource = args.fs_fileSource
 
 def get_corresponding_file(imgfiles,search_dir):
     #Yummyx (17) @hudengi pvd2 W1t81N callmesherni(6827262467731617414341)-Scene-001-02
