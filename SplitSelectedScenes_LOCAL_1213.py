@@ -12,7 +12,8 @@ import random
 import numpy as np
 import os
 import re
-from glob import escape
+import cv2
+import shutil 
 
 SelectedFramesDir = Path('SelectedScene')
 VideoPath = Path.cwd().glob('*.m[pk][v4]')
@@ -22,10 +23,7 @@ scannedPath = r'D:\paradise\stuff\Scanned'
 
 
 def is_movable(vpf):
-    # if 'Catlady' in vpf.stem:
-        # import pdb;pdb.set_trace()
-    rd = escape(vpf.stem)
-    imageFiles = Path.cwd().rglob('*%s*.jp*g' % rd)
+    imageFiles = Path.cwd().rglob('*%s*.jp*g' % vpf.stem)
     for x in imageFiles:
         return False
     return True
@@ -35,33 +33,45 @@ def CleanUpDoneVideo(targetPath=''):
         targetPath = scannedPath
     targetPath = Path(targetPath)
     fl = []
-    dl = []
-    # import pdb;pdb.set_trace()
+    import pdb;pdb.set_trace()
     for vpf in VideoPath:
         correspondingCSVname = vpf.stem + '-Scenes.csv'
         ccsvp = Path(correspondingCSVname)
         if not ccsvp.is_file():
-            # pass
             continue
         if is_movable(vpf):
             fl.append(str(vpf))
-            dl.append(ccsvp)
     
-    # import pdb;pdb.set_trace()
-    if not fl == []:
-        fileListCopy(fl,str(targetPath))
-        _ = [dlf.unlink() for dlf in dl]
+    import pdb;pdb.set_trace()
+    fileListCopy(fl,str(targetPath))
         
         
-    
+def getDuration(filename):
+    from moviepy.editor import VideoFileClip
+    clip = VideoFileClip(filename)
+    duration       = clip.duration
+    fps            = clip.fps
+    width, height  = clip.size
+    return duration, fps, (width, height)    
 
 def cutVideo(Ivideo,Outvideo,startTime,EndTime):
     # cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe  -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
-    cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe -hwaccel cuda -hwaccel_output_format cuda  -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
+    # cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe -y -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
+    video = cv2.VideoCapture(Ivideo)
+    duration = video.get(cv2.CAP_PROP_POS_MSEC)
+    # import pdb;pdb.set_trace()
+    if timeStringToValue(startTime) == 0:
+        if (timeStringToValue(EndTime)/100 - getDuration(Ivideo)[0]) < 1:
+            shutil.copy(Ivideo,Outvideo)
+            return
+    print(getDuration(Ivideo),duration)
+    print(Ivideo)
+    cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -i "Ivideo" -ss 00:00.0 -to 99:99.9 -c:a copy -c:v h264_nvenc -b:v 5M "output.mp4"'
     cmdTemplate = cmdTemplate.replace('Ivideo', Ivideo)
     cmdTemplate = cmdTemplate.replace('00:00.0', startTime)
     cmdTemplate = cmdTemplate.replace('99:99.9', EndTime)
     cmdTemplate = cmdTemplate.replace('output.mp4', Outvideo)
+    
     print(cmdTemplate)
     # with open('continueCommand.bat', 'a+') as fp:
         # fp.write(cmdTemplate+'\n')
@@ -83,7 +93,8 @@ def timeStringToValue(tstr):
 
 class VideoScene():
     def writeBatFile(self):
-        cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe -n -hwaccel cuda -hwaccel_output_format cuda  -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
+        # import pdb;pdb.set_trace()
+        cmdTemplate = 'C:\\app\\FFMPEG\\ffmpeg.exe -n -hwaccel nvdec -hwaccel_output_format cuda  -i "Ivideo" -ss 00:00.0 -to 99:99.9 -strict experimental "output.mp4"'
         cmdTemplate = cmdTemplate.replace('Ivideo', self.sceneVideo)
         cmdTemplate = cmdTemplate.replace('00:00.0', self.startTime)
         cmdTemplate = cmdTemplate.replace('99:99.9', self.EndTime)
@@ -146,7 +157,7 @@ class VideoScene():
 
 def extractScene(Ivideo):
     # os.system(r'set path=%path%;C:\app\FFMPEG;C:\Users\HP\MiniConda3\envs\globalOne\Scripts;')
-    cmdTemplate = 'C:\\Users\\HP\\MiniConda3\\envs\\globalOne\\Scripts\\scenedetect -m 5s --drop-short-scenes -i "Ivideo" detect-content list-scenes  save-images'
+    cmdTemplate = 'scenedetect -m 5s --drop-short-scenes -i "Ivideo" detect-content list-scenes  save-images'
     cmdTemplate = cmdTemplate.replace('Ivideo', str(Ivideo))
     print(cmdTemplate)
     os.system(cmdTemplate)
@@ -165,21 +176,26 @@ def main():
         # os.system('start "" "%s"' % str(Path.cwd()))
 
     for sceneImageFiles in SelectedFramesDir.glob('*.jp*g'):
+        sceneVideo = None
         for sve in supportedVideoExtension:
             vfn = re.sub('-Scene-[^\.]+','',sceneImageFiles.stem)
             # import pdb;pdb.set_trace()
             if Path(vfn+'.'+sve).is_file():
                 sceneVideo = vfn+'.'+sve
                 break
-        assert sceneVideo != None
+        if sceneVideo == None:
+            print('video not found')
+            continue
         csvFilePath = Path(sceneVideo).stem + '-Scenes.csv'
         assert Path(csvFilePath).is_file() 
         print(csvFilePath)
         try:
-            df = pd.read_csv(csvFilePath)
+            df = pd.read_csv(csvFilePath,skiprows=1)
         except:
             print('something is wrong with the csv reading YYYYYYYYYYYYYY',csvFilePath)
+            import pdb;pdb.set_trace()
             continue
+        # df.set_index()
         sceneId = re.search('Scene-(\d+)',sceneImageFiles.name).group(1)
         if not Path('extractedVideo').is_dir():
             Path('extractedVideo').mkdir()
@@ -193,9 +209,11 @@ def main():
         if df.shape[0] == 1:
             sceneId = 0
         try:
-            startTime = df.iloc[sceneId,2]  
-            EndTime = df.iloc[sceneId,5]
+            startTime = df.iloc[sceneId-1,2]  
+            EndTime = df.iloc[sceneId-1,5]
         except:
+            import pdb;pdb.set_trace()
+            print('unable to get timings')
             continue
         # Ivideo = sceneImageFiles
         newVideoSec = VideoScene(sceneVideo,Outvideo,startTime,EndTime,frozenset({sceneImageFiles}))
@@ -209,5 +227,11 @@ def main():
         # sceneImageFiles.unlink()
         # sceneImageFiles
 if __name__ == '__main__':
-    CleanUpDoneVideo()
+    main()
+    for cvideo in cutObjects:
+        cvideo.writeBatFile()
+        
+    for cvideo in cutObjects:
+        cvideo.cutVideo()
+    
     
