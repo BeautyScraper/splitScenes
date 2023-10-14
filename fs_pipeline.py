@@ -51,9 +51,9 @@ if __name__ == '__main__':
     move_corresponding_file(selectedPath,search_dir_path,target_dir_path)
     cutObjectsList = []
     for src_files in Path(fs_fileSource).glob('*.jpg'):
-        # import pdb;pdb.set_trace()
         if (Path(search_dir_path) / src_files.stem).is_dir():
             cutObjectsList.append(cutVideo(src_files.stem+'_video',src_files.stem))
+    # import pdb;pdb.set_trace()
     for cutObjectl in cutObjectsList:
         for cutObject in cutObjectl:
             cutObject.cutVideo()

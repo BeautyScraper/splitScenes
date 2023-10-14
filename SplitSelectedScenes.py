@@ -82,6 +82,7 @@ def cutVideo(Ivideo,Outvideo,startTime,EndTime):
     cmdTemplate = cmdTemplate.replace('output.mp4', Outvideo)
     
     print(cmdTemplate)
+    # import pdb;pdb.set_trace()
     # with open('continueCommand.bat', 'a+') as fp:
         # fp.write(cmdTemplate+'\n')
     os.system(cmdTemplate)
@@ -177,9 +178,9 @@ def extractScene(Ivideo):
 
     application = Path('C:\\Users\\HP\\MiniConda3\\envs\\globalOne\\Scripts\\scenedetect.exe')
     if not application.is_file():
-        cmdTemplate = 'scenedetect -m 1s --drop-short-scenes -i "Ivideo" detect-content list-scenes  save-images'
+        cmdTemplate = 'conda activate scene_cut && scenedetect -m 1s --drop-short-scenes -i "Ivideo" detect-content list-scenes  save-images'
     else:
-        cmdTemplate = 'C:\\Users\\HP\\MiniConda3\\envs\\globalOne\\Scripts\\scenedetect -m 1s --drop-short-scenes -i "Ivideo" detect-content list-scenes  save-images'
+        cmdTemplate = 'conda activate scene_cut && C:\\Users\\HP\\MiniConda3\\envs\\globalOne\\Scripts\\scenedetect -m 1s --drop-short-scenes -i "Ivideo" detect-content list-scenes  save-images'
     cmdTemplate = cmdTemplate.replace('Ivideo', str(Ivideo))
     print(cmdTemplate)
     # import pdb;pdb.set_trace()
